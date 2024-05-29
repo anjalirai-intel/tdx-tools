@@ -14,6 +14,7 @@ REQUIRED_PACKAGES_UBUNTU=(
   libvirt-dev
   python3-dev
   python3-pip
+  python3-venv
 )
 
 # Check whether required packages already been installed.
@@ -40,7 +41,6 @@ fi
 
 # Setup the python virtualenv
 if [[ ! -d ${CURR_DIR}/venv ]]; then
-  python3 -m pip install virtualenv
   python3 -m virtualenv -p python3 "${CURR_DIR}"/venv
   # shellcheck source=/dev/null
   source "${CURR_DIR}"/venv/bin/activate
