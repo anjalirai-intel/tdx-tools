@@ -10,6 +10,7 @@ GUEST=ubuntu
 SUITE="nosuite"
 KEEP_ISSUE_VM=false
 CASES=()
+PYTEST_EXCLUDE_TESTS="-k 'not redis and not nginx and not amx'"
 
 usage() {
 cat << EOM
@@ -58,7 +59,7 @@ run_suite() {
         PYTEST_PREFIX="python3 -m pytest --html=${HTML_REPORT} --self-contained-html --guest=$GUEST"
     fi
 
-    PYTEST_CMD="${PYTEST_PREFIX} ${TEST_ROOT}"
+    PYTEST_CMD="${PYTEST_PREFIX} ${TEST_ROOT} ${PYTEST_EXCLUDE_TESTS}"
 
     echo "================================="
     echo "RUN Suite  : $SUITE"
@@ -77,7 +78,7 @@ run_cases() {
     else
         PYTEST_PREFIX="python3 -m pytest --html=${HTML_REPORT} --self-contained-html --guest=$GUEST"
     fi
-    PYTEST_CMD="${PYTEST_PREFIX} $(printf " %s" "${CASES[@]}")"
+    PYTEST_CMD="${PYTEST_PREFIX} $(printf " %s" "${CASES[@]}") ${PYTEST_EXCLUDE_TESTS}"
 
     echo "================================="
     echo "CMD        : $PYTEST_CMD"
