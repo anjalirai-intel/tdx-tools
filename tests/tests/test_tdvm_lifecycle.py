@@ -7,6 +7,7 @@ This test module provides the basic lifecycle testings for TDVM includes:
 
 import logging
 import pytest
+from pycloudstack.vmguest import VirshSSH
 
 from pycloudstack.vmparam import VM_STATE_SHUTDOWN, VM_STATE_RUNNING, \
     VM_STATE_PAUSE, VM_TYPE_TD
@@ -34,7 +35,7 @@ def test_tdvm_lifecycle_virsh_suspend_resume(vm_factory):
 
     LOG.info("Create TD guest")
     inst = vm_factory.new_vm(VM_TYPE_TD, auto_start=True)
-    inst.wait_for_ssh_ready()
+    qm = VirshSSH(inst)
 
     LOG.info("Suspend TD guest")
     inst.suspend()
@@ -44,6 +45,7 @@ def test_tdvm_lifecycle_virsh_suspend_resume(vm_factory):
     LOG.info("Resume TD guest")
     inst.resume()
     ret = inst.wait_for_state(VM_STATE_RUNNING)
+    qm.close()
     assert ret, "Resume timeout"
 
 
@@ -58,7 +60,7 @@ def test_tdvm_lifecycle_virsh_start_shutdown(vm_factory):
 
     LOG.info("Create TD guest")
     inst = vm_factory.new_vm(VM_TYPE_TD, auto_start=True)
-    inst.wait_for_ssh_ready()
+    qm = VirshSSH(inst)
 
     LOG.info("Shutdown TD guest")
     inst.shutdown()
@@ -68,4 +70,5 @@ def test_tdvm_lifecycle_virsh_start_shutdown(vm_factory):
     LOG.info("Start TD guest")
     inst.start()
     ret = inst.wait_for_state(VM_STATE_RUNNING)
+    qm.close()
     assert ret, "Fail to start instance"

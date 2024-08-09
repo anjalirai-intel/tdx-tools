@@ -100,13 +100,6 @@ check_prerequistes() {
         echo "Please create artifacts.yaml from template file ${CURR_DIR}/artifacts.yaml.template first".
         exit 1
     fi
-
-    if [[ ! -f ${CURR_DIR}/tests/vm_ssh_test_key ]]; then
-        echo "Generate temporary test key for VM SSH access..."
-        pushd tests || exit
-        ssh-keygen -f vm_ssh_test_key -q -N ""
-        popd || exit
-    fi
 }
 
 process_args "$@"

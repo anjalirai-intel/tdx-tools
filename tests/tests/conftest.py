@@ -93,22 +93,6 @@ def output():
     return outdir
 
 
-@pytest.fixture(autouse=True, scope="session")
-def vm_ssh_key():
-    """
-    SSH key for remote running command to guest VM
-    """
-    return os.path.join(os.path.dirname(__file__), "vm_ssh_test_key")
-
-
-@pytest.fixture(autouse=True, scope="session")
-def vm_ssh_pubkey():
-    """
-    SSH key for remote running command to guest VM
-    """
-    return os.path.join(os.path.dirname(__file__), "vm_ssh_test_key.pub")
-
-
 @pytest.fixture(scope="session")
 def artifact_factory():
     """

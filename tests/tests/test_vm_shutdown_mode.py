@@ -12,6 +12,7 @@ import logging
 import time
 import pytest
 from pycloudstack.vmparam import VM_TYPE_LEGACY, VM_STATE_SHUTDOWN, VM_TYPE_EFI, VM_TYPE_TD
+from pycloudstack.vmguest import VirshSSH
 
 __author__ = 'cpio'
 
@@ -44,9 +45,10 @@ def test_vm_shutdown_mode(vm_factory, vm_type, mode):
     """
     LOG.info("Create guest")
     inst = vm_factory.new_vm(vm_type, auto_start=True)
-    inst.wait_for_ssh_ready()
+    qm = VirshSSH(inst)
 
     LOG.info("Shutdown guest")
+    qm.close()
     inst.shutdown(mode)
 
     # Sleep for a while

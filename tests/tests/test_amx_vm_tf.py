@@ -9,6 +9,7 @@ import re
 import logging
 import pytest
 from pycloudstack.vmparam import VM_TYPE_TD, VM_TYPE_EFI, VM_TYPE_LEGACY, VMSpec
+from pycloudstack.vmguest import VirshSSH
 
 __author__ = 'cpio'
 
@@ -22,7 +23,7 @@ pytestmark = [
 
 
 @pytest.mark.parametrize("vm_type", [VM_TYPE_TD, VM_TYPE_EFI, VM_TYPE_LEGACY])
-def test_vm_tf_infer_dien_bf16(vm_factory, vm_type, vm_ssh_pubkey, vm_ssh_key):
+def test_vm_tf_infer_dien_bf16(vm_factory, vm_type):
     """
     Test DIEN inference with BF18:
     Ref: https://github.com/IntelAI/models/tree/master/benchmarks/ \
@@ -31,13 +32,9 @@ def test_vm_tf_infer_dien_bf16(vm_factory, vm_type, vm_ssh_pubkey, vm_ssh_key):
     LOG.info("Create TD guest to test tensorflow")
     td_inst = vm_factory.new_vm(vm_type, vmspec=VMSpec.model_large())
 
-    # customize the VM image
-    td_inst.image.inject_root_ssh_key(vm_ssh_pubkey)
-
     # create and start VM instance
     td_inst.create()
     td_inst.start()
-    td_inst.wait_for_ssh_ready()
 
     # It may take up to 30 minutes to complete the test
     LOG.info("====== The test running may take up to 30 minutes! ======")
@@ -51,12 +48,13 @@ def test_vm_tf_infer_dien_bf16(vm_factory, vm_type, vm_ssh_pubkey, vm_ssh_key):
     --in-graph /root/dien_fp32_static_rnn_graph.pb
     --benchmark-only --verbose --
      '''
-    runner = td_inst.ssh_run(command.split(), vm_ssh_key)
-    assert runner.retcode == 0, "Failed to execute remote command"
+    qm = VirshSSH(td_inst)
+    stdout, stderr = qm.check_exec(command)
+    qm.close()
 
     # throughput should not be 0
     patt_ok = r'Approximate accelerator performance in recommendations/second is (\d*.\d*)'
-    match = re.search(patt_ok, '\n'.join(runner.stdout))
+    match = re.search(patt_ok, '\n'.join(stdout))
     assert match is not None
     images_per_s = match.group(1)
     LOG.info('Throughput: %s recommendations/s', images_per_s)

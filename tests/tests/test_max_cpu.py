@@ -7,6 +7,7 @@ import logging
 import psutil
 import pytest
 from pycloudstack.vmparam import VM_TYPE_LEGACY, VM_STATE_RUNNING, VM_TYPE_EFI, VM_TYPE_TD, VMSpec
+from pycloudstack.vmguest import VirshSSH
 
 __author__ = 'cpio'
 
@@ -34,9 +35,10 @@ def test_td_max_vcpu(vm_factory):
     inst = vm_factory.new_vm(VM_TYPE_TD, vmspec=vmspec, auto_start=True)
 
     assert inst.wait_for_state(VM_STATE_RUNNING), "Boot fail"
-    assert inst.wait_for_ssh_ready(), "Boot timeout"
+    qm = VirshSSH(inst)
 
     # Destroy VM to release CPU resource
+    qm.close()
     inst.destroy()
 
 def test_efi_max_vcpu(vm_factory):
@@ -48,9 +50,10 @@ def test_efi_max_vcpu(vm_factory):
     inst = vm_factory.new_vm(VM_TYPE_EFI, vmspec=vmspec, auto_start=True)
 
     assert inst.wait_for_state(VM_STATE_RUNNING), "Boot fail"
-    assert inst.wait_for_ssh_ready(), "Boot timeout"
+    qm = VirshSSH(inst)
 
     # Destroy VM to release CPU resource
+    qm.close()
     inst.destroy()
 
 def test_legacy_max_vcpu(vm_factory):
@@ -62,7 +65,8 @@ def test_legacy_max_vcpu(vm_factory):
     inst = vm_factory.new_vm(VM_TYPE_LEGACY, vmspec=vmspec, auto_start=True)
 
     assert inst.wait_for_state(VM_STATE_RUNNING), "Boot fail"
-    assert inst.wait_for_ssh_ready(), "Boot timeout"
+    qm = VirshSSH(inst)
 
     # Destroy VM to release CPU resource
+    qm.close()
     inst.destroy()

@@ -4,7 +4,10 @@ Testing for multiple TDVM co-exist:
 
 import logging
 import pytest
-from pycloudstack.vmparam import VM_TYPE_TD
+from pycloudstack.vmparam import VM_TYPE_TD, VM_TYPE_LEGACY
+import subprocess
+import time
+from pycloudstack.vmguest import VirshSSH
 
 __author__ = 'cpio'
 
@@ -19,7 +22,6 @@ pytestmark = [
     pytest.mark.vm_kernel("latest-guest-kernel"),
 ]
 
-
 def test_tdvms_coexist_create_destroy(vm_factory):
     """
     Test multiple TDVMs create/destory.
@@ -30,9 +32,11 @@ def test_tdvms_coexist_create_destroy(vm_factory):
     NOTE: vm_factory will cleanup all created VM instance in its __del__ later,
           so do not clean them explicity.
     """
+
     for index in range(MAX_TD_GUEST):
         LOG.info("Create %d TD", index)
         vm_factory.new_vm(VM_TYPE_TD, auto_start=True)
 
-    for item in vm_factory.vms.values():
-        item.wait_for_ssh_ready()
+    for td_inst in vm_factory.vms.values():
+        qm_ssh = VirshSSH(td_inst)
+        qm_ssh.close()
