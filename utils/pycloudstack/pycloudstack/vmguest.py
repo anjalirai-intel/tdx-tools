@@ -10,6 +10,7 @@ import errno
 import datetime
 import getpass
 import libvirt
+import paramiko
 import subprocess
 from .cmdrunner import SSHCmdRunner, NativeCmdRunner
 from .dut import DUT
@@ -624,3 +625,104 @@ class VMGuestFactory:
 
     def __del__(self):
         self.removeall()
+
+class VirshSSH():
+    CONNECT_SLEEP = 1
+    CONNECT_TIMEOUT = 60
+
+    def __init__(self,
+                 qemu_machine,
+                 timeout=CONNECT_TIMEOUT):
+
+        self.username = 'root'
+        self.password = '123456'
+        self.port = DEFAULT_SSH_PORT
+
+        # prevent paramiko to do spurious logs on stdout
+        paramiko.util.log_to_file(filename=f'/tmp/{qemu_machine.name}-paramiko.log', level=logging.DEBUG)
+        self.vm_ip = qemu_machine.get_ip()
+        assert self.vm_ip != None, "Failed to get IP Address"
+
+        self._wait_and_connect(self.port, timeout=timeout)
+
+
+    def _wait_and_connect(self, port, timeout=CONNECT_TIMEOUT):
+
+        self.ssh_conn = paramiko.SSHClient()
+        self.ssh_conn.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.ssh_conn.load_system_host_keys()
+
+        timeout_start = time.time()
+        print('Connecting ...')
+        while (self.ssh_conn != None):
+            try:
+                self.ssh_conn.connect(self.vm_ip,
+                                      username=self.username,
+                                      password=self.password,
+                                      port=self.port)
+                break
+            except paramiko.ssh_exception.SSHException as exc:
+                # socket is open, but not SSH service responded
+                if 'Error reading SSH protocol banner' in str(exc):
+                    #print('Wait ssh server to be available ...')
+                    pass
+                else:
+                    self.ssh_conn = None
+            except TimeoutError as terr:
+                pass
+            except:
+                pass
+            if (time.time() >= (timeout_start + timeout)):
+                print('Connection timeout !')
+                self.ssh_conn = None
+            else:
+                time.sleep(self.CONNECT_SLEEP)
+        assert self.ssh_conn != None, "Failed to connect TD Guest"
+        print('Connected ...')
+        return self.ssh_conn
+
+    def put(self, local_file, remote_file):
+        ftp_client=self.ssh_conn.open_sftp()
+        ftp_client.put(local_file, remote_file)
+        ftp_client.close()
+
+    def get(self, remote_file, local_file):
+        ftp_client=self.ssh_conn.open_sftp()
+        ftp_client.get(remote_file, local_file)
+        ftp_client.close()
+
+    def rsync_file(self, fname, dest, sudo=False):
+        """
+        fname : local file or folder
+        dest : destination folder (parent folder)
+        """
+        kv_user=self.username
+        kv_pass=self.password
+        kv_host=self.vm_ip
+        kv_port=self.port
+        ssh_opts=f'-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {kv_port}'
+        rsync_opts='-atrv --delete --exclude="*~"'
+        # use sshpass to pass clear text password for ssh
+        rsync_opts += f' -e "sshpass -p {kv_pass} ssh {ssh_opts}"'
+        if sudo:
+            rsync_opts += ' --rsync-path="sudo rsync"'
+        subprocess.check_call(f'rsync {rsync_opts}  {fname} {kv_user}@{kv_host}:{dest}',
+                              shell=True,
+                              stdout=subprocess.DEVNULL)
+
+    def check_exec(self, cmd, err_msg=None):
+        _, stdout, stderr = self.ssh_conn.exec_command(cmd)
+        if err_msg==None:
+            err_msg=f'Execution of {cmd} failed'
+        ret_status = stdout.channel.recv_exit_status()
+        stdout = stdout.read().decode('utf-8')
+        if ret_status != 0:
+            print(stderr.read().decode('utf-8'))
+        assert (0 == ret_status), err_msg
+        return stdout, stderr
+
+    def poweroff(self):
+        _, stdout, _ = self.ssh_conn.exec_command('poweroff')
+
+    def close(self):
+        return self.ssh_conn.close()

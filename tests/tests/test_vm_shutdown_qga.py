@@ -7,6 +7,7 @@ Please make sure QEMU guest agent is installed in your guest image.
 import logging
 import pytest
 from libvirt import libvirtError, VIR_ERR_AGENT_UNRESPONSIVE
+from pycloudstack.vmguest import VirshSSH
 
 from pycloudstack.vmparam import VM_TYPE_TD, VM_TYPE_EFI, VM_TYPE_LEGACY
 
@@ -33,11 +34,12 @@ def test_tdvm_qga_shutdown(vm_factory):
     inst = vm_factory.new_vm(VM_TYPE_TD)
     inst.create()
     inst.start()
-    assert inst.wait_for_ssh_ready()
+    qm = VirshSSH(inst)
 
     LOG.info("Request QEMU Guest Agent to shutdown the TD guest")
     # QEMU Guest Agent shuts the TD guest down abruptly, checking
     # for VM state does not work.
+    qm.close()
     try:
         inst.vmm.qemu_agent_shutdown()
     except libvirtError as e:
@@ -56,9 +58,10 @@ def test_efi_qga_shutdown(vm_factory):
     inst = vm_factory.new_vm(VM_TYPE_EFI)
     inst.create()
     inst.start()
-    assert inst.wait_for_ssh_ready()
+    qm = VirshSSH(inst)
 
     LOG.info("Request QEMU Guest Agent to shutdown the EFI guest")
+    qm.close()
     try:
         inst.vmm.qemu_agent_shutdown()
     except libvirtError as e:
@@ -77,9 +80,11 @@ def test_legacy_qga_shutdown(vm_factory):
     inst = vm_factory.new_vm(VM_TYPE_LEGACY)
     inst.create()
     inst.start()
-    assert inst.wait_for_ssh_ready()
+
+    qm = VirshSSH(inst)
 
     LOG.info("Request QEMU Guest Agent to shutdown the legacy VM")
+    qm.close()
     try:
         inst.vmm.qemu_agent_shutdown()
     except libvirtError as e:

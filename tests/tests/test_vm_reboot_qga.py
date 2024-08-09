@@ -8,6 +8,7 @@ import logging
 import time
 import pytest
 from libvirt import libvirtError, VIR_ERR_AGENT_UNRESPONSIVE
+from pycloudstack.vmguest import VirshSSH
 
 from pycloudstack.vmparam import VM_TYPE_TD, VM_TYPE_LEGACY, VM_TYPE_EFI
 
@@ -29,10 +30,10 @@ def test_tdvm_qga_reboot(vm_factory):
     Step 1: Create Legacy guest
     Step 2: Send command to QEMU Guest agent to reboot the Legacy guest
     """
-
     LOG.info("Create Legacy guest")
     inst = vm_factory.new_vm(VM_TYPE_TD, auto_start=True)
-    inst.wait_for_ssh_ready()
+    qm = VirshSSH(inst)
+    qm.close()
 
     LOG.info("Request QEMU Guest Agent to reboot the Legacy guest")
     # QEMU Guest Agent reboots the Legacy guest down abruptly, checking
@@ -44,7 +45,8 @@ def test_tdvm_qga_reboot(vm_factory):
         assert e.get_error_code() == VIR_ERR_AGENT_UNRESPONSIVE, "QEMU Guest Agent reboot fail"
 
     time.sleep(5)
-    assert inst.wait_for_ssh_ready(), "TD Guest did not reboot"
+    qm = VirshSSH(inst)
+    qm.close()
 
 def test_efi_qga_reboot(vm_factory):
     """
@@ -53,10 +55,10 @@ def test_efi_qga_reboot(vm_factory):
     Step 1: Create Legacy guest
     Step 2: Send command to QEMU Guest agent to reboot the Legacy guest
     """
-
     LOG.info("Create Legacy guest")
     inst = vm_factory.new_vm(VM_TYPE_EFI, auto_start=True)
-    inst.wait_for_ssh_ready()
+    qm = VirshSSH(inst)
+    qm.close()
 
     LOG.info("Request QEMU Guest Agent to reboot the Legacy guest")
     # QEMU Guest Agent reboots the Legacy guest down abruptly, checking
@@ -68,7 +70,8 @@ def test_efi_qga_reboot(vm_factory):
         assert e.get_error_code() == VIR_ERR_AGENT_UNRESPONSIVE, "QEMU Guest Agent reboot fail"
 
     time.sleep(5)
-    assert inst.wait_for_ssh_ready(), "TD Guest did not reboot"
+    qm = VirshSSH(inst)
+    qm.close()
 
 def test_legacy_qga_reboot(vm_factory):
     """
@@ -77,10 +80,10 @@ def test_legacy_qga_reboot(vm_factory):
     Step 1: Create Legacy guest
     Step 2: Send command to QEMU Guest agent to reboot the Legacy guest
     """
-
     LOG.info("Create Legacy guest")
     inst = vm_factory.new_vm(VM_TYPE_LEGACY, auto_start=True)
-    inst.wait_for_ssh_ready()
+    qm = VirshSSH(inst)
+    qm.close()
 
     LOG.info("Request QEMU Guest Agent to reboot the Legacy guest")
     # QEMU Guest Agent reboots the Legacy guest down abruptly, checking
@@ -92,4 +95,5 @@ def test_legacy_qga_reboot(vm_factory):
         assert e.get_error_code() == VIR_ERR_AGENT_UNRESPONSIVE, "QEMU Guest Agent reboot fail"
 
     time.sleep(5)
-    assert inst.wait_for_ssh_ready(), "TD Guest did not reboot"
+    qm = VirshSSH(inst)
+    qm.close()

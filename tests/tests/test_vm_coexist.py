@@ -11,6 +11,7 @@ guest. There are two types of non-TD guest:
 import logging
 import pytest
 from pycloudstack.vmparam import VM_TYPE_LEGACY, VM_TYPE_EFI, VM_TYPE_TD
+from pycloudstack.vmguest import VirshSSH
 
 __author__ = 'cpio'
 
@@ -43,6 +44,14 @@ def test_tdguest_with_legacy_base(vm_factory):
     LOG.info("Create an OVMF guest")
     efi_inst = vm_factory.new_vm(VM_TYPE_EFI, auto_start=True)
 
-    assert td_inst.wait_for_ssh_ready(), "Could not reach TD VM"
-    assert legacy_inst.wait_for_ssh_ready(), "Could not reach legacy VM"
-    assert efi_inst.wait_for_ssh_ready(), "Could not reach EFI VM"
+    q1 = VirshSSH(td_inst)
+    q2 = VirshSSH(legacy_inst)
+    q3 = VirshSSH(efi_inst)
+
+    assert q1.ssh_conn != None, "Could not reach TD VM"
+    assert q2.ssh_conn != None, "Could not reach legacy VM"
+    assert q3.ssh_conn != None, "Could not reach EFI VM"
+
+    q1.close()
+    q2.close()
+    q3.close()

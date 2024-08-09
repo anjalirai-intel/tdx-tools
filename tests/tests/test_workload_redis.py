@@ -7,6 +7,7 @@ import os
 import logging
 import pytest
 from pycloudstack.vmparam import VM_TYPE_TD
+from pycloudstack.vmguest import VirshSSH
 
 __author__ = 'cpio'
 
@@ -21,7 +22,7 @@ pytestmark = [
 ]
 
 
-def test_tdvm_redis(vm_factory, vm_ssh_pubkey, vm_ssh_key):
+def test_tdvm_redis(vm_factory):
     """
     Run redis benchmark test
     Ref: https://redis.io/topics/benchmarks
@@ -37,21 +38,20 @@ def test_tdvm_redis(vm_factory, vm_ssh_pubkey, vm_ssh_key):
     LOG.info("Create TD guest to run redis benchmark")
     td_inst = vm_factory.new_vm(VM_TYPE_TD)
 
-    # customize the VM image
-    td_inst.image.inject_root_ssh_key(vm_ssh_pubkey)
-    td_inst.image.copy_in(
-        os.path.join(CURR_DIR, "redis-bench.sh"), "/root/")
+    qm = VirshSSH(td_inst)
+    qm.put(os.path.join(CURR_DIR, "redis-bench.sh"), "/root/redis-bench.sh")
 
     # create and start VM instance
     td_inst.create()
     td_inst.start()
-    td_inst.wait_for_ssh_ready()
 
     command_list = [
         'systemctl start docker',
         '/root/redis-bench.sh -t get,set'
     ]
+
     for cmd in command_list:
         LOG.debug(cmd)
-        runner = td_inst.ssh_run(cmd.split(), vm_ssh_key)
-        assert runner.retcode == 0, "Failed to execute remote command"
+        stdout, stderr = qm.check_exec(cmd)
+        LOG.debug(stdout)
+    qm.close()

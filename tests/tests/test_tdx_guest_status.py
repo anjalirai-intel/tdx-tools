@@ -7,6 +7,7 @@ import datetime
 import logging
 import pytest
 from pycloudstack.vmparam import VM_TYPE_TD
+from pycloudstack.vmguest import VirshSSH
 
 __author__ = 'cpio'
 
@@ -25,34 +26,31 @@ pytestmark = [
 
 
 @pytest.fixture(scope="function")
-def base_td_guest_inst(vm_factory, vm_ssh_pubkey):
+def base_td_guest_inst(vm_factory):
     """
     Create and start a td guest instance
     """
     td_inst = vm_factory.new_vm(VM_TYPE_TD)
-    # customize the VM image
-    td_inst.image.inject_root_ssh_key(vm_ssh_pubkey)
 
     # create and start VM instance
     td_inst.create()
     td_inst.start()
-    assert td_inst.wait_for_ssh_ready(), "Boot timeout"
 
     yield td_inst
 
     td_inst.destroy()
 
 
-def test_tdvm_tdx_initialized(base_td_guest_inst, vm_ssh_key):
+def test_tdvm_tdx_initialized(base_td_guest_inst):
     """
     check cpu flag "tdx_guest" in TD guest.
     """
-
     LOG.info("Test if TDX is enabled in TD guest")
     command = "lscpu | grep -i flags"
 
-    runner = base_td_guest_inst.ssh_run(command.split(), vm_ssh_key)
-    assert runner.retcode == 0, "Failed to execute remote command"
+    qm = VirshSSH(base_td_guest_inst)
+    stdout, stderr = qm.check_exec(command)
 
-    LOG.info(runner.stdout[0])
-    assert "tdx_guest" in runner.stdout[0], "TDX initilization failed in the guest!"
+    LOG.info(stdout)
+    qm.close()
+    assert "tdx_guest" in stdout, "TDX initilization failed in the guest!"

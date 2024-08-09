@@ -6,6 +6,7 @@ import os
 import logging
 import pytest
 from pycloudstack.vmparam import VM_TYPE_TD
+from pycloudstack.vmguest import VirshSSH
 
 __author__ = 'cpio'
 
@@ -19,7 +20,7 @@ pytestmark = [
 ]
 
 
-def test_tdvm_nginx(vm_factory, vm_ssh_pubkey, vm_ssh_key):
+def test_tdvm_nginx(vm_factory):
     """
     Run nginx benchmark test
     Use official docker images nginx:latest
@@ -33,18 +34,15 @@ def test_tdvm_nginx(vm_factory, vm_ssh_pubkey, vm_ssh_key):
     LOG.info("Create VM to run nginx benchmark")
     td_inst = vm_factory.new_vm(VM_TYPE_TD)
 
-    # customize the VM image
-    td_inst.image.inject_root_ssh_key(vm_ssh_pubkey)
-    td_inst.image.copy_in(
-        os.path.join(CURR_DIR, "nginx-bench.sh"), "/root/")
+    qm = VirshSSH(td_inst)
+    qm.put(os.path.join(CURR_DIR, "nginx-bench.sh"), "/root/nginx-bench.sh")
 
     # create and start VM instance
     td_inst.create()
     td_inst.start()
-    td_inst.wait_for_ssh_ready()
 
     cmd = 'sysctl -w net.ipv6.conf.all.disable_ipv6=1'
-    runner = td_inst.ssh_run(cmd.split(), vm_ssh_key)
+    stdout, stderr = qm.check_exec(cmd)
 
     command_list = [
         'systemctl start docker',
@@ -52,5 +50,7 @@ def test_tdvm_nginx(vm_factory, vm_ssh_pubkey, vm_ssh_key):
     ]
     for cmd in command_list:
         LOG.debug(cmd)
-        runner = td_inst.ssh_run(cmd.split(), vm_ssh_key)
-        assert runner.retcode == 0, "Failed to execute remote command"
+        stdout, stderr = qm.check_exec(cmd)
+        LOG.debug(stdout)
+    qm.close()
+

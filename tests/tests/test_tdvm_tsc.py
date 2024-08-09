@@ -11,6 +11,7 @@ import logging
 import pytest
 from pycloudstack.dut import DUT
 from pycloudstack.vmparam import VM_TYPE_TD
+from pycloudstack.vmguest import VirshSSH
 
 __author__ = 'cpio'
 
@@ -29,22 +30,20 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def base_td_guest_inst(vm_factory, vm_ssh_pubkey):
+def base_td_guest_inst(vm_factory):
     """
     Create and start a td guest instance
     """
     td_inst = vm_factory.new_vm(VM_TYPE_TD)
-    td_inst.image.inject_root_ssh_key(vm_ssh_pubkey)
     td_inst.create()
     td_inst.start()
-    assert td_inst.wait_for_ssh_ready(), "Boot timeout"
 
     yield td_inst
 
     td_inst.destroy()
 
 
-def _remote_run_and_fetch(td_inst, vm_ssh_key, output, command, output_file):
+def _remote_run_and_fetch(td_inst, output, command, output_file):
     """
     Runs a command in TD guest and then scp_out the result
 
@@ -53,15 +52,13 @@ def _remote_run_and_fetch(td_inst, vm_ssh_key, output, command, output_file):
     One of the reason to fetch the result to host is to save the original output
     and upload to log server for manual analysis in case needed.
     """
-    runner = td_inst.ssh_run(command.split(), vm_ssh_key)
-    assert runner.retcode == 0, "failed to execute remote command"
-
-    runner = td_inst.scp_out(
-        os.path.join('/tmp', output_file), output, vm_ssh_key)
-    assert runner.retcode == 0, "failed to copy-out result file"
+    qm = VirshSSH(td_inst)
+    qm.check_exec(command)
+    qm.get(os.path.join('/tmp', output_file), os.path.join(output, output_file))
+    qm.close()
 
 
-def test_tdvm_clocksource_tsc(base_td_guest_inst, vm_ssh_key, output):
+def test_tdvm_clocksource_tsc(base_td_guest_inst, output):
     """
     check clocksource is *tsc* in TD guest.
 
@@ -75,7 +72,7 @@ def test_tdvm_clocksource_tsc(base_td_guest_inst, vm_ssh_key, output):
     command = f"cat /sys/devices/system/clocksource/clocksource0/current_clocksource\
                 > /tmp/{output_file}"
 
-    _remote_run_and_fetch(base_td_guest_inst, vm_ssh_key, output, command, output_file)
+    _remote_run_and_fetch(base_td_guest_inst, output, command, output_file)
 
     saved_file = os.path.join(output, output_file)
     with open(saved_file, 'r', encoding="utf8") as fsaved:
@@ -83,7 +80,7 @@ def test_tdvm_clocksource_tsc(base_td_guest_inst, vm_ssh_key, output):
         LOG.info("TD guest clocksource is tsc")
 
 
-def test_tdvm_cpuid_tscfreq(base_td_guest_inst, vm_ssh_key, output):
+def test_tdvm_cpuid_tscfreq(base_td_guest_inst, output):
     """
     Check cpuid 0x15.0 in TD guest.
     To make it simple, we only check EAX value, it should be statically 1.
@@ -102,7 +99,7 @@ def test_tdvm_cpuid_tscfreq(base_td_guest_inst, vm_ssh_key, output):
     output_file = f"cpuid_0x15_check_{DATE_SUFFIX}.log"
     command = f"cpuid -r -l 0x15 > /tmp/{output_file}"
 
-    _remote_run_and_fetch(base_td_guest_inst, vm_ssh_key, output, command, output_file)
+    _remote_run_and_fetch(base_td_guest_inst, output, command, output_file)
 
     saved_file = os.path.join(output, output_file)
     found_exe_1 = False
@@ -116,7 +113,7 @@ def test_tdvm_cpuid_tscfreq(base_td_guest_inst, vm_ssh_key, output):
     assert found_exe_1
 
 
-def test_tdvm_compare2_host_tscfreq(base_td_guest_inst, vm_ssh_key, output):
+def test_tdvm_compare2_host_tscfreq(base_td_guest_inst, output):
     """
     Comparing tsc frequence of host & guest.
     Be noticed that when host tsc frequency is less than 1G Hz,
@@ -137,7 +134,7 @@ def test_tdvm_compare2_host_tscfreq(base_td_guest_inst, vm_ssh_key, output):
     output_file = f"guest_tsc_freq_check_{DATE_SUFFIX}.log"
     command = f"dmesg |grep mhz -i > /tmp/{output_file}"
 
-    _remote_run_and_fetch(base_td_guest_inst, vm_ssh_key, output, command, output_file)
+    _remote_run_and_fetch(base_td_guest_inst, output, command, output_file)
 
     saved_file = os.path.join(output, output_file)
     guest_freq = 0
