@@ -10,6 +10,7 @@ import errno
 import datetime
 import getpass
 import libvirt
+import subprocess
 from .cmdrunner import SSHCmdRunner, NativeCmdRunner
 from .dut import DUT
 from .vmimg import VMImage
@@ -360,12 +361,20 @@ class VMGuest:
         """
         Destroy VM Guest
         """
+        out = subprocess.run("virsh list --all", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, encoding="utf-8")
+        LOG.debug("virsh list before teardown")
+        for proc_out in out.stdout.split("\n"):
+            LOG.info("%s", proc_out)
         LOG.debug("+ Destroy guest %s", self.name)
         self.vmm.destroy(is_undefined=is_undefined)
         if delete_image:
             self.image.destroy()
         if delete_log:
             self.vmm.delete_log()
+        out = subprocess.run("virsh list --all", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, encoding="utf-8")
+        LOG.debug("virsh list after teardown")
+        for proc_out in out.stdout.split("\n"):
+            LOG.info("%s", proc_out)
 
     def reboot(self):
         """
