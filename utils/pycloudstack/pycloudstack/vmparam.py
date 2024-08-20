@@ -8,6 +8,7 @@ VM_TYPE_SGX = "sgx"
 VM_TYPE_TD_PERF = "td_perf"
 VM_TYPE_EFI_PERF = "efi_perf"
 VM_TYPE_LEGACY_PERF = "legacy_perf"
+VM_TYPE_TD_SB = "td_sb"
 
 # VM params for live migration
 VM_TYPE_MIGTD = "mig_td"
@@ -30,6 +31,7 @@ BIOS_BINARY_LEGACY_UBUNTU = "/usr/share/seabios/bios.bin"
 
 # Installed from the package of intel-mvp-qemu-kvm
 BIOS_OVMF = "/usr/share/qemu/OVMF.fd"
+SB_BIOS_OVMF = "/usr/share/ovmf/OVMF.tdx.fd"
 
 # vTPM TD binary file
 VTPM_PATH = "/usr/share/tdx-vtpm/vtpmtd.bin"
