@@ -25,6 +25,7 @@ from .vmparam import (
     VM_TYPE_LEGACY,
     VM_TYPE_EFI,
     VM_TYPE_TD,
+    VM_TYPE_TD_SB,
     VM_TYPE_SGX,
     VM_STATE_SHUTDOWN,
     VM_STATE_RUNNING,
@@ -36,6 +37,7 @@ from .vmparam import (
     QEMU_EXEC_CENTOS,
     QEMU_EXEC_UBUNTU,
     BIOS_OVMF,
+    SB_BIOS_OVMF,
     VM_TYPE_TD_PERF,
     VM_TYPE_EFI_PERF,
     VM_TYPE_LEGACY_PERF,
@@ -148,6 +150,7 @@ class VMMLibvirt(VMMBase):
         VM_TYPE_TD_PERF: "tdx-base-perf",
         VM_TYPE_EFI_PERF: "ovmf-base-perf",
         VM_TYPE_LEGACY_PERF: "legacy-base-perf",
+        VM_TYPE_TD_SB: "tdx-sb",
     }
 
     def __init__(self, vminst):
@@ -240,8 +243,11 @@ class VMMLibvirt(VMMBase):
                 "+sgx-kss,+sgx-mode64,+sgx-provisionkey,+sgx-tokenkey,+sgx1,+sgx2,+sgxlc"
             )
             xmlobj.set_epc_params(self.vminst.vmspec.epc)
-        elif self.vminst.vmtype in [VM_TYPE_TD, VM_TYPE_TD_PERF]:
-            xmlobj.loader = BIOS_OVMF
+        elif self.vminst.vmtype in [VM_TYPE_TD, VM_TYPE_TD_PERF, VM_TYPE_TD_SB]:
+            if self.vminst.vmtype == VM_TYPE_TD_SB:
+                xmlobj.loader = SB_BIOS_OVMF
+            else:
+                xmlobj.loader = BIOS_OVMF
 
             # If TD has hugepage_path, set it to xml
             if self.vminst.hugepage_path is not None:
