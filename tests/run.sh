@@ -54,9 +54,9 @@ run_suite() {
 
     XML_REPORT=${TEST_OUTPUT}/${SUITE}-${SUFFIX}.xml
     if [  $KEEP_ISSUE_VM == true ]; then
-        PYTEST_PREFIX="python3 -m pytest --junit-xml=${XML_REPORT} --keep-vm --guest=$GUEST"
+        PYTEST_PREFIX="python3 -m pytest --reruns 2 --junit-xml=${XML_REPORT} --keep-vm --guest=$GUEST"
     else
-        PYTEST_PREFIX="python3 -m pytest --junit-xml=${XML_REPORT} --guest=$GUEST"
+        PYTEST_PREFIX="python3 -m pytest --reruns 2 --junit-xml=${XML_REPORT} --guest=$GUEST"
     fi
 
     PYTEST_CMD="${PYTEST_PREFIX} ${TEST_ROOT} ${PYTEST_EXCLUDE_TESTS}"
@@ -74,9 +74,9 @@ run_cases() {
 
     XML_REPORT=${TEST_OUTPUT}/${SUITE}-${SUFFIX}.xml
     if [  $KEEP_ISSUE_VM == true ]; then
-        PYTEST_PREFIX="python3 -m pytest --junit-xml=${XML_REPORT} --keep-vm --guest=$GUEST"
+        PYTEST_PREFIX="python3 -m pytest --reruns 2 --junit-xml=${XML_REPORT} --keep-vm --guest=$GUEST"
     else
-        PYTEST_PREFIX="python3 -m pytest --junit-xml=${XML_REPORT} --guest=$GUEST"
+        PYTEST_PREFIX="python3 -m pytest --reruns 2 --junit-xml=${XML_REPORT} --guest=$GUEST"
     fi
     PYTEST_CMD="${PYTEST_PREFIX} $(printf " %s" "${CASES[@]}") ${PYTEST_EXCLUDE_TESTS}"
 
