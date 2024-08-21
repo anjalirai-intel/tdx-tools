@@ -19,3 +19,5 @@ py-libnuma
 py
 setuptools
 paramiko
+pytest-rerunfailures
+
