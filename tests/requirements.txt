@@ -18,3 +18,4 @@ cpuid
 py-libnuma
 py
 setuptools
+paramiko
