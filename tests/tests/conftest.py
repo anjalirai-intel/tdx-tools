@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 # pylint: disable=redefined-outer-name
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def vm_name(request):
     """
     Customized VM name in module scope
@@ -23,7 +23,7 @@ def vm_name(request):
     return name_marker.args[0] if name_marker else request.node.name
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def vm_image(request, artifact_factory):
     """
     Customized VM image in module scope
@@ -45,7 +45,7 @@ def vm_image(request, artifact_factory):
     return artobj.get(dest_dir, cache_dir)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def vm_kernel(request, artifact_factory):
     """
     Customized VM kernel in module scope
@@ -68,7 +68,7 @@ def vm_kernel(request, artifact_factory):
 
 
 # pylint: disable=redefined-outer-name
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def vm_factory(request, vm_image, vm_kernel):
     """
     New mark for the vm factory to create different VM.
