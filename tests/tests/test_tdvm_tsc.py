@@ -29,7 +29,7 @@ pytestmark = [
 ]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def base_td_guest_inst(vm_factory):
     """
     Create and start a td guest instance
