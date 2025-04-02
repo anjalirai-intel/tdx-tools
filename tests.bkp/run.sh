@@ -73,10 +73,12 @@ run_suite() {
 run_cases() {
 
     XML_REPORT=${TEST_OUTPUT}/${SUITE}-${SUFFIX}.xml
+    HTML_REPORT=${TEST_OUTPUT}/${SUITE}-${SUFFIX}.html
     if [  $KEEP_ISSUE_VM == true ]; then
         PYTEST_PREFIX="python3 -m pytest --reruns 2 --junit-xml=${XML_REPORT} --keep-vm --guest=$GUEST"
     else
-        PYTEST_PREFIX="python3 -m pytest --reruns 2 --junit-xml=${XML_REPORT} --guest=$GUEST"
+        # PYTEST_PREFIX="python3 -m pytest --reruns 2 --junit-xml=${XML_REPORT} --guest=$GUEST"
+	PYTEST_PREFIX="python3 -m pytest --html=${HTML_REPORT} --self-contained-html --guest=$GUEST"
     fi
     PYTEST_CMD="${PYTEST_PREFIX} $(printf " %s" "${CASES[@]}") ${PYTEST_EXCLUDE_TESTS}"
 

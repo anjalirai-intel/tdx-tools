@@ -1,0 +1,31 @@
+# Setup bridge network
+- name: Setup network bridge
+  become: true
+  hosts: all
+  gather_facts: no
+  vars:
+    net_bridge_name: 'br0'
+    net_bridge_dev: 'br0'
+    net_bridge_slave_name: 'bridge-br0'
+    net_ethernet_dev: 'enp1s0'       # This can be overrided via host variable
+    network_provider: nm
+    network_connections:
+      # Create a bridge profile
+      - name: "{{ net_bridge_name }}"
+        interface_name: "{{ net_bridge_dev }}"
+        type: bridge
+        persistent_state: present
+        autoconnect: yes
+        ip:
+          dhcp4: yes
+          auto6: no
+      # Enslave the ethernet to the bridge
+      - name: "{{ net_bridge_slave_name }}"
+        state: up
+        type: ethernet
+        interface_name: "{{ net_ethernet_dev }}"
+        master: "{{ net_bridge_name }}"
+        slave_type: bridge
+  roles:
+    - role: linux-system-roles.network
+

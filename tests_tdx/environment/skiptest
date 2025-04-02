@@ -1,0 +1,18 @@
+ftruncate04
+ftruncate04_64
+# ptrace07 is skipped due to BLR-632
+ptrace07
+# quotactl04 is skipped due to https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1868665
+quotactl04
+# crypto_user02 is skipped due to https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1837543
+crypto_user02
+# smoketest - df01_sh is skipped due to BLR-785
+df01_sh
+# syscalls - creat09 is skipped due to BLR-785
+creat09
+# Below test case are for net.features. They need remote host so skip them.
+vxlan_multi_03
+vxlan_uni_03
+vxlan_uni_03
+vlan03
+sit01

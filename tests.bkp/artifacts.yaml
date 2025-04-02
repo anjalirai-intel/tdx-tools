@@ -1,0 +1,4 @@
+latest-guest-image-ubuntu:
+  source: file:///home/sdp/jinen/tdx/guest-tools/image/tdx-guest-ubuntu-24.04-generic.qcow2
+latest-guest-kernel-ubuntu:
+  source: file:///home/sdp/jinen/tdx/guest-tools/image/vmlinuz-6.8.0-57-generic

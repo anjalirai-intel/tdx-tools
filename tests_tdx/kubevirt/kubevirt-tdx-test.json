@@ -1,0 +1,77 @@
+{
+  "apiVersion": "kubevirt.io/v1",
+  "kind": "VirtualMachine",
+  "metadata": {
+    "labels": {
+      "special": "kubevirt-tdx-test"
+    },
+    "name": "kubevirt-tdx-test"
+  },
+  "spec": {
+    "running": false,
+    "template": {
+      "spec": {
+        "domain": {
+          "launchSecurity": {
+            "tdx": {
+              "QGS": "vsock:2:4050"
+            }
+          },
+          "clock": {
+            "timer": {
+              "hpet": {
+                "present": false
+              }
+            }
+          },
+          "machine": {
+            "type": "q35"
+          },
+          "cpu": {
+            "model": "host-passthrough",
+            "sockets": 1,
+            "cores": 4
+          },
+          "features": {
+            "acpi": {},
+            "apic": {}
+          },
+          "devices": {
+            "autoattachGraphicsDevice": false,
+            "disks": [
+              {
+                "disk": {
+                  "bus": "virtio"
+                },
+                "name": "host-disk"
+              }
+            ]
+          },
+          "firmware": {
+            "bootloader": {
+              "efi": {
+                "secureBoot": false
+              }
+            }
+          },
+          "resources": {
+            "requests": {
+              "memory": "16Gi"
+            }
+          }
+        },
+        "terminationGracePeriodSeconds": 10,
+        "volumes": [
+          {
+            "hostDisk": {
+              "capacity": "25Gi",
+              "path": "/data/td-guest-ubuntu-22.04-test.img",
+              "type": "DiskOrCreate"
+            },
+            "name": "host-disk"
+          }
+        ]
+      }
+    }
+  }
+}

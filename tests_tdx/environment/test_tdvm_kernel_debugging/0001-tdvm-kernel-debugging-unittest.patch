@@ -1,0 +1,127 @@
+From d278d3ecec0246a9986399f14188db155c8ed7f0 Mon Sep 17 00:00:00 2001
+From: jialeie <jialei.feng@intel.com>
+Date: Sun, 5 Sep 2021 21:23:08 +0800
+Subject: [PATCH] tdvm kernel debugging unittest
+
+modify ud, debug, breakpoint hander to test with tdvm_debug
+reference https://gitlab.com/kvm-unit-tests/kvm-unit-tests/-/blob/master/x86/debug.c
+
+Signed-off-by: jialeie <jialei.feng@intel.com>
+---
+ arch/x86/kernel/traps.c | 56 +++++++++++++++++++++++++++++++++++++++++
+ drivers/Makefile        |  1 +
+ 2 files changed, 57 insertions(+)
+
+diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+index ce05cd727248..7697e986aa15 100644
+--- a/arch/x86/kernel/traps.c
++++ b/arch/x86/kernel/traps.c
+@@ -74,6 +74,20 @@
+ 
+ DECLARE_BITMAP(system_vectors, NR_VECTORS);
+ 
++volatile uint tdvm_test_stage = 0;
++volatile bool tdvm_got_ud = false;
++volatile uint tdvm_n = 0;
++volatile ulong tdvm_db_addr[10], tdvm_dr6[10];
++volatile ulong tdvm_bp_addr = 0;
++
++EXPORT_SYMBOL_GPL(tdvm_test_stage);
++EXPORT_SYMBOL_GPL(tdvm_got_ud);
++EXPORT_SYMBOL_GPL(tdvm_n);
++EXPORT_SYMBOL_GPL(tdvm_db_addr);
++EXPORT_SYMBOL_GPL(tdvm_dr6);
++EXPORT_SYMBOL_GPL(tdvm_bp_addr);
++
++
+ static inline void cond_local_irq_enable(struct pt_regs *regs)
+ {
+ 	if (regs->flags & X86_EFLAGS_IF)
+@@ -210,12 +224,30 @@ DEFINE_IDTENTRY(exc_overflow)
+ 	do_error_trap(regs, 0, "overflow", X86_TRAP_OF, SIGSEGV, 0, NULL);
+ }
+ 
++static inline void write_cr4(ulong val)
++{
++	asm volatile ("mov %0, %%cr4" : : "r"(val) : "memory");
++}
++
++static inline ulong read_cr4(void)
++{
++	ulong val;
++	asm volatile ("mov %%cr4, %0" : "=r"(val) : : "memory");
++	return val;
++}
++
+ #ifdef CONFIG_X86_F00F_BUG
+ void handle_invalid_op(struct pt_regs *regs)
+ #else
+ static inline void handle_invalid_op(struct pt_regs *regs)
+ #endif
+ {
++	if (tdvm_test_stage > 0) {
++		pr_info("cpio: ud handler");
++		tdvm_got_ud = true;
++		write_cr4(read_cr4() & ~X86_CR4_DE);
++		return;
++	}
+ 	do_error_trap(regs, 0, "invalid opcode", X86_TRAP_UD, SIGILL,
+ 		      ILL_ILLOPN, error_get_trap_addr(regs));
+ }
+@@ -470,6 +502,7 @@ DEFINE_IDTENTRY_DF(exc_double_fault)
+ 
+ DEFINE_IDTENTRY(exc_bounds)
+ {
++
+ 	if (notify_die(DIE_TRAP, "bounds", regs, 0,
+ 			X86_TRAP_BR, SIGSEGV) == NOTIFY_STOP)
+ 		return;
+@@ -611,6 +644,11 @@ DEFINE_IDTENTRY_ERRORCODE(exc_general_protection)
+ static bool do_int3(struct pt_regs *regs)
+ {
+ 	int res;
++	if (tdvm_test_stage > 0) {
++		pr_info("cpio: int3 handler");
++		tdvm_bp_addr = regs->ip;
++		return true;
++	}
+ 
+ #ifdef CONFIG_KGDB_LOW_LEVEL_TRAP
+ 	if (kgdb_ll_trap(DIE_INT3, "int3", regs, 0, X86_TRAP_BP,
+@@ -997,6 +1035,24 @@ static __always_inline void exc_debug_user(struct pt_regs *regs,
+ /* IST stack entry */
+ DEFINE_IDTENTRY_DEBUG(exc_debug)
+ {
++	if (1 == tdvm_test_stage) {
++		pr_info("cpio: debug handler 1");
++		tdvm_db_addr[tdvm_n] = regs->ip;
++		get_debugreg(tdvm_dr6[tdvm_n], 6);
++		if (tdvm_dr6[tdvm_n] & 0x1)
++			regs->flags |= (1 << 16);
++		if (++tdvm_n >= 10) {
++			regs->flags &= ~(1 << 8);
++			set_debugreg(0x00000400, 7);
++		}
++		return;
++	} else if (2 == tdvm_test_stage) {
++		pr_info("cpio: debug handler 2 %lx", regs->ip);
++		asm("stc\n"
++		"nop;nop;nop\n"
++		"rclq $1, tdvm_n(%rip)\n");
++	}
++
+ 	exc_debug_kernel(regs, debug_read_clear_dr6());
+ }
+ 
+diff --git a/drivers/Makefile b/drivers/Makefile
+index 27c018bdf4de..462bbe256547 100644
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -189,3 +189,4 @@ obj-$(CONFIG_GNSS)		+= gnss/
+ obj-$(CONFIG_INTERCONNECT)	+= interconnect/
+ obj-$(CONFIG_COUNTER)		+= counter/
+ obj-$(CONFIG_MOST)		+= most/
++obj-y				+= tdvm_debug/
+-- 
+2.27.0
+

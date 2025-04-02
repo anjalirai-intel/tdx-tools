@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tdx-tensorflow-bench
+spec:
+  template:
+    spec:
+      volumes:
+      - name: tf-data
+        hostPath:
+          path: /root/tf/data
+          type: Directory
+      - name: tf-log
+        hostPath:
+          path: /root/tf/log
+          type: Directory
+      - name: dockerenv
+        hostPath:
+          path: /root/.dockerenv
+          type: FileOrCreate
+      containers:
+      - name: tensorflow
+        image: intel/image-recognition:tf-latest-mobilenet-v1-fp32-inference
+        volumeMounts:
+        - mountPath: /root/tf/data
+          name: tf-data
+        - mountPath: /root/tf/log
+          name: tf-log
+        - mountPath: /.dockerenv
+          name: dockerenv
+        env:
+        - name: DATASET_DIR
+          value: "/root/tf/data"
+        - name: OUTPUT_DIR
+          value: "/root/tf/log"
+        - name: http_proxy
+          value: "http://child-prc.intel.com:913"
+        - name: https_proxy
+          value: "http://child-prc.intel.com:913"
+        command: ["/bin/bash"]
+        args: ["quickstart/fp32_batch_inference.sh"]
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+      hostNetwork: true
+      nodeName: td-guest
+  backoffLimit: 0
