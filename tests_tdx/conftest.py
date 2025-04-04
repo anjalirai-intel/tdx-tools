@@ -115,7 +115,6 @@ def vm_ssh_pubkey():
     """
     return os.path.join(os.path.dirname(__file__), "vm_ssh_test_key.pub")
 
-
 def pytest_html_results_summary(prefix, *_, **__):
     """
     Hook to refine the report
@@ -123,7 +122,7 @@ def pytest_html_results_summary(prefix, *_, **__):
     prefix.extend([html.h1("Linux TDX MVP Stack")])
 
 
-#@pytest.hookimpl(tryfirst=True)
+'''#@pytest.hookimpl(tryfirst=True)
 def pytest_sessionfinish(session, exitstatus):
     """
     Expect to display version of packages in below list
@@ -158,7 +157,7 @@ def pytest_sessionfinish(session, exitstatus):
             LOG.warning("Fail to open file %s", vipfile)
 
     LOG.info("Session exis status is %s", exitstatus)
-
+'''
 
 @pytest.fixture(scope="session")
 def artifact_factory(request):

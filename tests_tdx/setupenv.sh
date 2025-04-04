@@ -1,6 +1,7 @@
 #!/bin/bash
 
 CURR_DIR=$(pwd)
+PYTDXMEASURE_PATH="$CURR_DIR/../attestation/pytdxattest"
 
 REQUIRED_PACKAGES_CENTOS=(
   libvirt-devel
@@ -43,7 +44,7 @@ if [[ ! -d ${CURR_DIR}/venv ]]; then
   python3 -m virtualenv -p python3 "${CURR_DIR}"/venv
   # shellcheck source=/dev/null
   source "${CURR_DIR}"/venv/bin/activate
-  pip3 install -r requirements.txt
+  pip3 install -r requirements.txt -r ./gpl/requirements-gpl.txt
   ret=$?
   if [ ! $ret -eq 0 ]; then
     echo "Fail to install python PIP packages, please check your proxy (https_proxy) or setup PyPi mirror."
@@ -58,7 +59,7 @@ fi
 
 # Install tests_tdx into the PYTHON path, so you can use "python3 -m pytest tests_tdx/xxx.py" to
 # run the case module individually
-export PYTHONPATH=$PYTHONPATH:$CURR_DIR/tests
+export PYTHONPATH=$PYTHONPATH:$CURR_DIR
 
 # Add pycloudstack into PYTHONPATH in case not installing it via pip3
 if [[ -d $CURR_DIR/../utils/pycloudstack ]]; then
@@ -68,6 +69,16 @@ if [[ -d $CURR_DIR/../utils/pycloudstack ]]; then
 
   # pycloudstack package could be installed via "pip3" or copied to $CURR_DIR/pycloudstack
   export PYTHONPATH=$CURR_DIR/../utils/pycloudstack:$PYTHONPATH
+fi
+
+# Add pytdxattest into PYTHONPATH for guest testing in case not installing it via pip3
+if [[ -d $PYTDXMEASURE_PATH ]]; then
+  if pip3 list | grep "pytdxattest"; then
+    echo "pytdxattest is already installed but will be replaced by $PYTDXMEASURE_PATH"
+  fi
+
+  # pytdxattest package could be installed via "pip3" or copied to $PYTDXMEASURE_PATH
+  export PYTHONPATH=$PYTDXMEASURE_PATH:$PYTHONPATH
 fi
 
 # Check whether virt-customize tool was installed

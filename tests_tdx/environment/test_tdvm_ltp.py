@@ -22,7 +22,7 @@ pytestmark = [
 
 # pylint: disable=redefined-outer-name
 @pytest.fixture(scope="module")
-def td_instance_with_ssh(vm_factory, vm_ssh_pubkey):
+def td_instance_with_ssh(vm_factory, vm_ssh_pubkey, vm_ssh_key):
     """
     New mark for the vm factory to create different VM.
     """
@@ -35,12 +35,26 @@ def td_instance_with_ssh(vm_factory, vm_ssh_pubkey):
     # Please see cmdline in syscalls as an example
     this_dir = os.path.dirname(os.path.realpath(__file__))
     skiptest = f"{this_dir}/skiptest"
-    td_inst.image.copy_in(skiptest, "/opt/ltp/")
+    ltp_setup = f"{this_dir}/ltp_setup.sh"
+    td_inst.image.copy_in(ltp_setup, "/root/")
+    td_inst.image.copy_in(skiptest, "/root/")
 
     # create and start VM instance
     td_inst.create()
     td_inst.start()
     td_inst.wait_for_ssh_ready()
+
+    command_list = [
+        'cd /root/',
+        'chmod +x ltp_setup.sh',
+        './ltp_setup.sh',
+        'cp -f /root/skiptest /opt/ltp/',
+    ]
+
+    for cmd in command_list:
+        LOG.debug(cmd)
+        runner = td_inst.ssh_run(cmd.split(), vm_ssh_key)
+        assert runner.retcode == 0, "Failed to execute remote command"
     return td_inst
 
 
