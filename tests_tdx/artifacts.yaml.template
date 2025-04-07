@@ -45,3 +45,15 @@
 #latest-ai-image-ubuntu:
 #  source: http://<your artifactory webserver for tdx guest image>/td-guest-ubuntu-22.04.qcow2.tar.xz
 #  sha256sum: http://<your artifactory webserver for tdx guest image>/td-guest-ubuntu-22.04.qcow2.tar.xz.sha256sum
+
+latest-guest-image-ubuntu:
+  source: file://<QCOW2_IMG>
+latest-guest-kernel-ubuntu:
+  source: file://<QCOW2_IMG>
+
+latest-guest-test-image-ubuntu:
+  source: file://<QCOW2_IMG>
+
+latest-ai-image-ubuntu:
+  source: file://<QCOW2_IMG>
+

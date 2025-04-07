@@ -7,7 +7,7 @@ import re
 import logging
 import pytest
 from pycloudstack.vmparam import VM_TYPE_TD, VM_TYPE_EFI, VM_TYPE_LEGACY, VMSpec
-
+import os
 
 __author__ = 'cpio'
 
@@ -34,13 +34,30 @@ def test_vm_tf_infer_mobilenetv1_bf16(vm_factory, vm_type, vm_ssh_pubkey, vm_ssh
     # customize the VM image
     td_inst.image.inject_root_ssh_key(vm_ssh_pubkey)
 
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    guest_setup = f"{this_dir}/interoperability_suite_guest_setup.sh"
+    tf_install_guest = f"{this_dir}/tf_install_guest.sh"
+    td_inst.image.copy_in(tf_install_guest, "/root/")
+    td_inst.image.copy_in(guest_setup, "/root/")
+
     # create and start VM instance
     td_inst.create()
     td_inst.start()
     td_inst.wait_for_ssh_ready()
 
+    setup_command_list = [
+        'cd /root/',
+        'chmod +x interoperability_suite_guest_setup.sh tf_install_guest.sh',
+        './interoperability_suite_guest_setup.sh',
+    ]
+
+    for cmd in setup_command_list:
+        LOG.debug(cmd)
+        runner = td_inst.ssh_run(cmd.split(), vm_ssh_key)
+        assert runner.retcode == 0, "Failed to execute remote command"
+
     command = '''
-    cd /root/models-2.5.0 && DNNL_MAX_CPU_ISA=AVX512_CORE_AMX OMP_NUM_THREADS=16
+    source tf_install_guest.sh && cd /root/models-2.5.0 && DNNL_MAX_CPU_ISA=AVX512_CORE_AMX OMP_NUM_THREADS=16
     KMP_AFFINITY=granularity=fine,verbose,compact python3 ./benchmarks/launch_benchmark.py
     --benchmark-only --framework tensorflow --model-name mobilenet_v1
     --mode inference --precision bfloat16 --batch-size 1
@@ -75,13 +92,30 @@ def test_vm_tf_infer_dien_bf16(vm_factory, vm_type, vm_ssh_pubkey, vm_ssh_key):
     # customize the VM image
     td_inst.image.inject_root_ssh_key(vm_ssh_pubkey)
 
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+    guest_setup = f"{this_dir}/interoperability_suite_guest_setup.sh"
+    tf_install_guest = f"{this_dir}/tf_install_guest.sh"
+    td_inst.image.copy_in(tf_install_guest, "/root/")
+    td_inst.image.copy_in(guest_setup, "/root/")
+
     # create and start VM instance
     td_inst.create()
     td_inst.start()
     td_inst.wait_for_ssh_ready()
 
+    setup_command_list = [
+        'cd /root/',
+        'chmod +x interoperability_suite_guest_setup.sh tf_install_guest.sh',
+        './interoperability_suite_guest_setup.sh',
+    ]
+
+    for cmd in setup_command_list:
+        LOG.debug(cmd)
+        runner = td_inst.ssh_run(cmd.split(), vm_ssh_key)
+        assert runner.retcode == 0, "Failed to execute remote command"
+
     command = '''
-    cd /root/models-2.5.0 && DNNL_MAX_CPU_ISA=AVX512_CORE_AMX OMP_NUM_THREADS=16
+    source tf_install_guest.sh && cd /root/models-2.5.0 && DNNL_MAX_CPU_ISA=AVX512_CORE_AMX OMP_NUM_THREADS=16
     KMP_AFFINITY=granularity=fine,verbose,compact python3 ./benchmarks/launch_benchmark.py
     --model-name dien  --mode inference  --precision bfloat16
     --framework tensorflow --data-location /root/dien
