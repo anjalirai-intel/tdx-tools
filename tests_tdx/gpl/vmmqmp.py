@@ -82,7 +82,7 @@ class VMMQemu(VMMBase):
             cmdarr += ["-S", ]
 
         # common
-        cmdarr += ["-accel", "kvm", "-no-hpet", "-nodefaults", "-nographic"]
+        cmdarr += ["-accel", "kvm", "-nodefaults", "-nographic"]
         cmdarr += ["-name", f"process={self.vminst.name},debug-threads=on"]
         cmdarr += ["-m", f"{self.vminst.vmspec.memsize}K"]
         cmdarr += ["-qmp", f"unix:{self._qmp_socket},server=on,wait=off"]
@@ -137,8 +137,8 @@ class VMMQemu(VMMBase):
                     param_cpu += ",tsc-freq=1000000000"
                 else:
                     cmdarr += ["-object", "tdx-guest,sept-ve-disable=on,id=tdx"]
-            cmdarr += ["-object", f"memory-backend-memfd-private,id=ram1,size={self.vminst.vmspec.memsize}K"]
-            param_cpu += ",-shstk"
+            cmdarr += ["-object", f"memory-backend-ram,id=ram1,size={self.vminst.vmspec.memsize}K"]
+            #param_cpu += ",-shstk"
             if self.vminst.tsx is False:
                 param_cpu += ",-hle,-rtm"
             if self.vminst.tsc is False:

@@ -9,7 +9,7 @@ import os
 import datetime
 import logging
 import pytest
-from pycloudstack.vmparam import VM_TYPE_TD
+from pycloudstack.vmparam import VM_TYPE_TD, VMSpec
 
 __author__ = 'cpio'
 
@@ -25,11 +25,15 @@ pytestmark = [
 
 
 @pytest.fixture(scope="function")
-def base_td_guest_inst(vm_factory):
+def base_td_guest_inst(vm_factory, vm_ssh_pubkey, vm_ssh_key):
     """
     Create and start a td guest instance
     """
-    td_inst = vm_factory.new_vm(VM_TYPE_TD, auto_start=True)
+    td_inst = vm_factory.new_vm(VM_TYPE_TD, vmspec=VMSpec.model_large())
+    # customize the VM image
+    td_inst.image.inject_root_ssh_key(vm_ssh_pubkey)
+    td_inst.create()
+    td_inst.start()
     td_inst.wait_for_ssh_ready()
     assert td_inst.wait_for_ssh_ready(), "Boot timeout"
 
