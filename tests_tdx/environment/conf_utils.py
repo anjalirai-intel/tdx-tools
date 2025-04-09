@@ -9,13 +9,14 @@ __author__ = 'cpio'
 LOG = logging.getLogger(__name__)
 
 
-def get_td_vm(vm_factory, vm_ssh_key, tsc_opt=None, tsx_opt=None, mwait_opt=None):
+def get_td_vm(vm_factory, vm_ssh_key, vm_ssh_pubkey, tsc_opt=None, tsx_opt=None, mwait_opt=None):
     """
     Create and start a td guest instance
     """
     params = f"tsc_opt={tsc_opt}, tsx_opt={tsx_opt}, mwait_opt={mwait_opt}"
     LOG.info(params)
     td_inst = vm_factory.new_vm(VM_TYPE_TD, tsc=tsc_opt, tsx=tsx_opt, mwait=mwait_opt)
+    td_inst.image.inject_root_ssh_key(vm_ssh_pubkey)
     td_inst.create()
     td_inst.start()
     assert td_inst.wait_for_ssh_ready(), "Boot timeout"

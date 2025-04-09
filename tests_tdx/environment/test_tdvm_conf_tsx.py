@@ -63,11 +63,11 @@ def get_msr_tsx(td_inst, vm_ssh_key):
     return arch_cap_tsx, tsx_ctl
 
 
-def test_tsx_default(vm_factory, vm_ssh_key):
+def test_tsx_default(vm_factory, vm_ssh_key, vm_ssh_pubkey):
     """
     TSX is enabled by default.
     """
-    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, tsx_opt=None))
+    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, vm_ssh_pubkey, tsx_opt=None))
 
     bit_hle, bit_rtm = get_cpuid_tsx(td_inst, vm_ssh_key)
     assert (bit_hle & bit_rtm) == 1, "TSX is NOT enabled by default"
@@ -78,11 +78,11 @@ def test_tsx_default(vm_factory, vm_ssh_key):
     LOG.info("TSX is enabled by default.")
 
 
-def test_tsx_disabled(vm_factory, vm_ssh_key):
+def test_tsx_disabled(vm_factory, vm_ssh_key, vm_ssh_pubkey):
     """
     TSC deadline is disabled.
     """
-    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, tsx_opt=False))
+    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, vm_ssh_pubkey, tsx_opt=False))
     bit_hle, bit_rtm = get_cpuid_tsx(td_inst, vm_ssh_key)
     assert (bit_hle & bit_rtm) != 1, "TSX is NOT disabled"
 

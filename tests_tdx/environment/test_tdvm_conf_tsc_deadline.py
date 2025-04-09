@@ -48,23 +48,23 @@ def get_msr_tsc_deadline(td_inst, vm_ssh_key):
     return get_msr_info(td_inst, vm_ssh_key, MSR_IA32_TSC_DEADLINE)
 
 
-def test_tsc_deadline_default(vm_factory, vm_ssh_key):
+def test_tsc_deadline_default(vm_factory, vm_ssh_key, vm_ssh_pubkey):
     """
     TSC deadline is enabled by default.
     """
     tsc_deadline_opt = None
-    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, tsc_deadline_opt))
+    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, vm_ssh_pubkey, tsc_deadline_opt))
     assert get_cpuid_tsc_deadline(td_inst, vm_ssh_key) == 1, "TSC deadline is NOT enabled by default"
     assert get_msr_tsc_deadline(td_inst, vm_ssh_key) is not None, "TSC deadline MSR is not available by default"
     LOG.info("TSC deadline is enabled by default.")
 
 
-def test_tsc_deadline_disabled(vm_factory, vm_ssh_key):
+def test_tsc_deadline_disabled(vm_factory, vm_ssh_key, vm_ssh_pubkey):
     """
     TSC deadline is disabled.
     """
     tsc_deadline_opt = False
-    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, tsc_deadline_opt))
+    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, vm_ssh_pubkey, tsc_deadline_opt))
     assert get_cpuid_tsc_deadline(td_inst, vm_ssh_key) == 0, "TSC deadline is NOT disabled"
     assert get_msr_tsc_deadline(td_inst, vm_ssh_key) is None, "TSC deadline MSR is available when disabled"
     LOG.info("TSC deadline is disabled.")

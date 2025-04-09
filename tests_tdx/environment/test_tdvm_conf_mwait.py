@@ -34,28 +34,28 @@ def get_cpuid_mwait(td_inst, vm_ssh_key):
     return mwait
 
 
-def test_mwait_default(vm_factory, vm_ssh_key):
+def test_mwait_default(vm_factory, vm_ssh_key, vm_ssh_pubkey):
     """
     MWAIT is disabled by default.
     """
-    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, mwait_opt=None))
+    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, vm_ssh_pubkey, mwait_opt=None))
     assert get_cpuid_mwait(td_inst, vm_ssh_key) == 0, "MWAIT should be disabled by default"
     LOG.info("MWAIT is disabled by default.")
 
 
-def test_mwait_disabled(vm_factory, vm_ssh_key):
+def test_mwait_disabled(vm_factory, vm_ssh_key, vm_ssh_pubkey):
     """
     MWAIT is disabled.
     """
-    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, mwait_opt="off"))
+    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, vm_ssh_pubkey, mwait_opt="off"))
     assert get_cpuid_mwait(td_inst, vm_ssh_key) == 0, "MWAIT is NOT disabled"
     LOG.info("MWAIT is disabled.")
 
 
-def test_mwait_enabled(vm_factory, vm_ssh_key):
+def test_mwait_enabled(vm_factory, vm_ssh_key, vm_ssh_pubkey):
     """
     MWAIT is enabled.
     """
-    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, mwait_opt="on"))
-    assert get_cpuid_mwait(td_inst, vm_ssh_key) == 1, "MWAIT is NOT enabled"
+    td_inst = next(get_td_vm(vm_factory, vm_ssh_key, vm_ssh_pubkey, mwait_opt="on"))
+    assert get_cpuid_mwait(td_inst, vm_ssh_key, vm_ssh_pubkey) == 1, "MWAIT is NOT enabled"
     LOG.info("MWAIT is enabled.")
